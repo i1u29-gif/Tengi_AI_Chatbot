@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đề 4: Chatbot FAQ & Đặt Lịch Tư Vấn | ĐỘI_TENGI - Vibe Coding 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastNotification" class="hidden fixed bottom-5 right-5 z-50 bg-slate-800 border border-cyan-400/60 text-cyan-200 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium"></div>
+
+  <!-- HEADER -->
+  <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center font-extrabold text-slate-950 shadow-lg">
+          TG
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg text-white leading-tight">Tengi SmartHome Care 24/7</h1>
+            <span class="hidden sm:inline-block text-[11px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-md font-semibold">ĐỘI_TENGI • ĐỀ 4 (BẢNG A)</span>
+          </div>
+          <p class="text-xs text-slate-400">Kênh Chatbot AI trả lời FAQ tự động 24/7 & Đặt lịch hẹn tư vấn</p>
+        </div>
+      </div>
+
+      <!-- AI Config & Navigation Tabs -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <span id="aiModeBadge" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+          ⚡ Kịch bản Chuẩn
+        </span>
+        <button id="btnSoundToggle" type="button" onclick="window.toggleSoundNotification()"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition"
+          title="Bật/Tắt âm thanh báo tin nhắn (Điểm WOW)">
+          🔔 Âm báo: BẬT
+        </button>
+
+        <div class="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1 gap-1">
+          <input id="apiKeyInput" type="password" placeholder="Dán Gemini API Key (AI thật)..."
+            class="bg-transparent text-xs px-2.5 py-1 w-44 focus:outline-none text-slate-200" />
+          <button type="button" onclick="window.saveApiKeyFromUI()"
+            class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs px-2.5 py-1 rounded-lg transition">
+            Lưu Key
+          </button>
+        </div>
+
+        <nav class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex gap-1">
+          <button id="tab-customer" type="button" onclick="window.switchTab('customer')"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-blue-600 text-white flex items-center gap-1.5">
+            💬 Chatbot 24/7
+          </button>
+          <button id="tab-admin" type="button" onclick="window.switchTab('admin')"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5">
+            🛠️ Quản trị
+            <span id="adminCountBadge" class="bg-cyan-400 text-slate-950 px-1.5 py-0.2 rounded-full text-[11px] font-bold">0</span>
+          </button>
+          <button id="tab-testcases" type="button" onclick="window.switchTab('testcases')"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white flex items-center gap-1.5">
+            🧪 6 Ca Kiểm Thử (Bảng A)
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4">
+
+    <!-- TAB 1: KHÁCH HÀNG (CHATBOT FAQ & ĐẶT LỊCH) -->
+    <section id="view-customer" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left Sidebar: 10 FAQs -->
+      <aside class="lg:col-span-4 space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-bold text-xs sm:text-sm text-cyan-400 uppercase tracking-wider">📚 Bộ kiến thức 10 câu FAQ</h2>
+            <span class="text-[11px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Yêu cầu #1</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-3">
+            Bấm vào bất kỳ câu hỏi thường gặp nào bên dưới hoặc tự nhập câu hỏi theo ý bạn:
+          </p>
+          <div id="faqListContainer" class="space-y-1.5 max-h-[390px] overflow-y-auto chat-scroll pr-1"></div>
+        </div>
+
+        <!-- Out-of-scope Trigger Box -->
+        <div class="bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-500/40 rounded-2xl p-4 shadow-lg">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-xs sm:text-sm text-indigo-300">🔍 Test câu hỏi ngoài phạm vi</h3>
+            <span class="text-[11px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded">Yêu cầu #3</span>
+          </div>
+          <p class="text-xs text-slate-300 mb-3">
+            Khi khách hỏi ngoài 10 câu FAQ, Chatbot sẽ chủ động đề xuất mở Form đặt lịch tư vấn:
+          </p>
+          <button type="button"
+            onclick="window.askQuestion('Tôi muốn thiết kế riêng hệ thống điều khiển công nghiệp cho tòa nhà 20 tầng tại Đà Nẵng thì chi phí sao?')"
+            class="w-full text-left text-xs bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-400/40 text-indigo-200 px-3 py-2.5 rounded-xl transition">
+            "Tôi muốn thiết kế riêng hệ thống điều khiển cho tòa nhà 20 tầng..." →
+          </button>
+        </div>
+      </aside>
+
+      <!-- Right Column: Chat Window -->
+      <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[650px] shadow-2xl overflow-hidden">
+        <!-- Chat Topbar & Quick Replies (Kano Làm Mượt) -->
+        <div class="px-5 py-3 bg-slate-900 border-b border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="font-semibold text-sm text-white">Trợ lý AI Tư vấn Tự động 24/7</span>
+              <span class="hidden sm:inline-block text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">Chống trả lời lạc đề</span>
+            </div>
+            <button type="button" onclick="window.openBookingModal(false)"
+              class="text-xs bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg transition shadow">
+              📅 Đặt lịch tư vấn
+            </button>
+          </div>
+          <!-- Quick Replies Bar đúng theo infographic BTC: Giờ mở cửa | Báo giá | Đặt lịch -->
+          <div class="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-800/80">
+            <span class="text-[11px] text-slate-400 font-medium mr-1">🚀 Hỏi nhanh:</span>
+            <button type="button" onclick="window.askQuestion('Giờ làm việc và địa chỉ showroom của Tengi ở đâu?')"
+              class="text-xs bg-slate-800 hover:bg-blue-600/30 hover:border-blue-400 text-slate-200 border border-slate-700 px-3 py-1 rounded-full transition">
+              🕒 Giờ mở cửa
+            </button>
+            <button type="button" onclick="window.askQuestion('Giá gói lắp đặt nhà thông minh cơ bản là bao nhiêu?')"
+              class="text-xs bg-slate-800 hover:bg-blue-600/30 hover:border-blue-400 text-slate-200 border border-slate-700 px-3 py-1 rounded-full transition">
+              💰 Báo giá
+            </button>
+            <button type="button" onclick="window.askQuestion('Chính sách bảo hành và đổi trả thiết bị như thế nào?')"
+              class="text-xs bg-slate-800 hover:bg-blue-600/30 hover:border-blue-400 text-slate-200 border border-slate-700 px-3 py-1 rounded-full transition">
+              🛡️ Bảo hành 24T
+            </button>
+            <button type="button" onclick="window.askQuestion('Cửa hàng có hỗ trợ khảo sát tận nơi miễn phí không?')"
+              class="text-xs bg-slate-800 hover:bg-blue-600/30 hover:border-blue-400 text-slate-200 border border-slate-700 px-3 py-1 rounded-full transition">
+              🏠 Khảo sát miễn phí
+            </button>
+            <button type="button" onclick="window.openBookingModal(false)"
+              class="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-full font-semibold transition">
+              📅 Đặt lịch ngay
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages Box -->
+        <div id="chatMessages" class="flex-1 p-5 overflow-y-auto chat-scroll space-y-4"></div>
+
+        <!-- 03 Suggested Related Questions (Yêu cầu 2) -->
+        <div class="px-5 py-2.5 bg-slate-950/70 border-t border-slate-800">
+          <p class="text-[11px] text-slate-400 mb-1.5 font-medium">💡 03 Câu hỏi gợi ý liên quan sau mỗi lượt trả lời (Yêu cầu #2):</p>
+          <div id="suggestedChips" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- Input Error Banner -->
+        <div id="chatErrorBanner" class="hidden px-5 py-2 bg-rose-950/90 border-t border-rose-500/40 text-rose-200 text-xs"></div>
+
+        <!-- Input Form -->
+        <form onsubmit="window.handleChatSubmit(event)" class="p-3.5 bg-slate-950 border-t border-slate-800 flex gap-2">
+          <input id="chatInput" type="text"
+            placeholder="Nhập câu hỏi của bạn (VD: Chính sách bảo hành thế nào?)..."
+            class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400" />
+          <button type="submit"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition shrink-0">
+            Gửi
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 2: TRANG QUẢN TRỊ ĐƠN GIẢN (Yêu cầu 5) -->
+    <section id="view-admin" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-white">📋 Trang Quản Trị Lịch Hẹn Tư Vấn (Yêu cầu #5)</h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Xem danh sách lịch hẹn đã đặt từ <code class="text-cyan-400">localStorage</code> và xóa lịch hẹn đã xử lý.
+            </p>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <button type="button" onclick="window.openBookingModal(false)"
+              class="text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2 rounded-xl transition">
+              + Thêm lịch hẹn mới
+            </button>
+            <button type="button" onclick="window.clearAllBookings()"
+              class="text-xs bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 font-semibold px-3.5 py-2 rounded-xl transition">
+              🗑️ Xóa tất cả đã xử lý
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+            <p class="text-xs text-slate-400">Tổng số lịch hẹn đang lưu</p>
+            <p id="statTotalBookings" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+            <p class="text-xs text-slate-400">Cơ chế lưu trữ</p>
+            <p class="text-lg font-bold text-emerald-400 mt-1">localStorage (Tự phục hồi lỗi)</p>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+            <p class="text-xs text-slate-400">Kiểm tra dữ liệu (Validation)</p>
+            <p class="text-lg font-bold text-indigo-400 mt-1">SĐT 10 số VN & Chặn quá khứ</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-950 text-slate-300 text-xs uppercase">
+                <th class="py-3.5 px-4">Mã LH</th>
+                <th class="py-3.5 px-4">Tên khách hàng</th>
+                <th class="py-3.5 px-4">Số điện thoại</th>
+                <th class="py-3.5 px-4">Ngày & Giờ hẹn</th>
+                <th class="py-3.5 px-4">Nội dung cần tư vấn</th>
+                <th class="py-3.5 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody" class="divide-y divide-slate-800 text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: BẢNG 6 CA KIỂM THỬ BẮT BUỘC (BẢNG A - 15 ĐIỂM) -->
+    <section id="view-testcases" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="mb-5">
+          <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Tiêu chí Kiểm thử & Xử lý lỗi (15/100 điểm - Bảng A)</span>
+          <h2 class="text-xl font-bold text-white mt-1">🧪 06 Ca Kiểm Tra Thực Tế (2 Bình thường • 2 Không hợp lệ • 2 Biên/Sự cố)</h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Bấm nút <strong>"Chạy thử ngay"</strong> ở từng dòng để kiểm chứng trực tiếp trên ứng dụng hoặc kiểm tra thủ công theo đúng quy chế Bảng A.
+          </p>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-950 text-slate-300 text-xs uppercase">
+                <th class="py-3 px-4">Mã Ca</th>
+                <th class="py-3 px-4">Phân loại</th>
+                <th class="py-3 px-4">Đầu vào / Thao tác kiểm thử</th>
+                <th class="py-3 px-4">Kết quả mong đợi</th>
+                <th class="py-3 px-4">Kết quả thực tế (Đã xác minh)</th>
+                <th class="py-3 px-4 text-right">Kích hoạt</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <tr>
+                <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">TC-01</td>
+                <td class="py-3.5 px-4"><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-xs">Bình thường #1</span></td>
+                <td class="py-3.5 px-4">Hỏi câu có trong FAQ: <em>"Giá gói lắp đặt nhà thông minh cơ bản là bao nhiêu?"</em></td>
+                <td class="py-3.5 px-4 text-slate-300">AI diễn đạt tự nhiên báo giá 4.900.000đ và hiển thị đúng 03 câu hỏi gợi ý liên quan.</td>
+                <td class="py-3.5 px-4 text-emerald-300">PASS: Trả lời tự nhiên chính xác, sinh đúng 03 chip câu hỏi gợi ý bên dưới.</td>
+                <td class="py-3.5 px-4 text-right">
+                  <button onclick="window.runTestCase(1)" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">▶ Chạy thử</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">TC-02</td>
+                <td class="py-3.5 px-4"><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-xs">Bình thường #2</span></td>
+                <td class="py-3.5 px-4">Đặt lịch hợp lệ: Tên <em>"Phạm Nga Thế"</em>, SĐT <em>"0912345678"</em>, ngày hôm nay lúc <em>15:00</em>.</td>
+                <td class="py-3.5 px-4 text-slate-300">Lưu vào <code>localStorage</code>, thông báo thành công, hiển thị trên Trang quản trị và xóa được.</td>
+                <td class="py-3.5 px-4 text-emerald-300">PASS: Lưu thành công mã LH, đồng bộ tức thì sang bảng Quản trị và xóa bình thường.</td>
+                <td class="py-3.5 px-4 text-right">
+                  <button onclick="window.runTestCase(2)" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">▶ Chạy thử</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">TC-03</td>
+                <td class="py-3.5 px-4"><span class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded text-xs">Không hợp lệ #1</span></td>
+                <td class="py-3.5 px-4">Nhập SĐT sai định dạng: <em>"12345abc"</em> hoặc thiếu chữ số vào Form đặt lịch.</td>
+                <td class="py-3.5 px-4 text-slate-300">Hệ thống chặn lưu, báo lỗi rõ ràng yêu cầu nhập đúng 10 chữ số chuẩn VN.</td>
+                <td class="py-3.5 px-4 text-emerald-300">PASS: Validator chặn submit, hiển thị thông báo lỗi đỏ và focus vào ô SĐT.</td>
+                <td class="py-3.5 px-4 text-right">
+                  <button onclick="window.runTestCase(3)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">▶ Chạy thử</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">TC-04</td>
+                <td class="py-3.5 px-4"><span class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded text-xs">Không hợp lệ #2</span></td>
+                <td class="py-3.5 px-4">Chọn ngày hẹn trong quá khứ (<em>01/01/2020</em>) hoặc ngoài giờ làm việc (<em>23:30</em>).</td>
+                <td class="py-3.5 px-4 text-slate-300">Chặn lưu lịch hẹn bất hợp lý, cảnh báo không thể đặt lịch trong quá khứ.</td>
+                <td class="py-3.5 px-4 text-emerald-300">PASS: Chặn hoàn toàn, báo lỗi rõ ràng, không làm bẩn dữ liệu <code>localStorage</code>.</td>
+                <td class="py-3.5 px-4 text-right">
+                  <button onclick="window.runTestCase(4)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">▶ Chạy thử</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">TC-05</td>
+                <td class="py-3.5 px-4"><span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded text-xs">Ca biên #1</span></td>
+                <td class="py-3.5 px-4">Hỏi câu ngoài phạm vi 10 câu FAQ: <em>"Thiết kế BMS công nghiệp cho tòa nhà 25 tầng..."</em></td>
+                <td class="py-3.5 px-4 text-slate-300">AI không bịa số liệu, đặt <code>can_answer=false</code>, chủ động hiện nút mời đặt lịch tư vấn.</td>
+                <td class="py-3.5 px-4 text-emerald-300">PASS: Chatbot từ chối khéo, hiện nút "Đặt lịch tư vấn với nhân viên" và tự điền sẵn câu hỏi vào ghi chú.</td>
+                <td class="py-3.5 px-4 text-right">
+                  <button onclick="window.runTestCase(5)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">▶ Chạy thử</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">TC-06</td>
+                <td class="py-3.5 px-4"><span class="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded text-xs">Ca sự cố #2</span></td>
+                <td class="py-3.5 px-4">Sự cố mất kết nối Gemini API (Timeout/Quota) & dữ liệu <code>localStorage</code> bị ghi đè chuỗi JSON hỏng.</td>
+                <td class="py-3.5 px-4 text-slate-300">Ứng dụng không bị crash trắng trang; tự khôi phục <code>localStorage</code> và chuyển sang Engine dự phòng.</td>
+                <td class="py-3.5 px-4 text-emerald-300">PASS: Tự động reset JSON lỗi và trả lời thông qua Fallback Recovery kèm cảnh báo rõ ràng.</td>
+                <td class="py-3.5 px-4 text-right">
+                  <button onclick="window.runTestCase(6)" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">▶ Chạy thử</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL FORM ĐẶT LỊCH TƯ VẤN (Yêu cầu 4) -->
+  <div id="bookingModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <button type="button" onclick="window.closeBookingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
+      <h3 class="text-lg font-bold text-white mb-1">📅 Đặt Lịch Tư Vấn Với Nhân Viên</h3>
+      <p class="text-xs text-slate-400 mb-4">Khung giờ làm việc: 08:00 – 20:00 hàng ngày. Dữ liệu lưu trực tiếp vào <code>localStorage</code>.</p>
+
+      <div id="bookingFormError" class="hidden mb-3 p-3 rounded-xl bg-rose-950 border border-rose-500/50 text-rose-200 text-xs leading-relaxed"></div>
+
+      <form id="bookingForm" onsubmit="window.handleBookingSubmit(event)" class="space-y-3.5" novalidate>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Họ và tên khách hàng *</label>
+          <input id="bookName" type="text" placeholder="VD: Phạm Nga Thế"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Số điện thoại (10 số chuẩn VN) *</label>
+          <input id="bookPhone" type="tel" placeholder="VD: 0912345678"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-medium text-slate-300">Thời gian hẹn (Tự điền hôm nay) *</span>
+            <button type="button" onclick="window.fillTodayNow()"
+              class="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold underline">
+              ⚡ Tự điền ngày giờ hôm nay
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <input id="bookDate" type="date"
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400" />
+            </div>
+            <div>
+              <input id="bookTime" type="time"
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Ghi chú / Câu hỏi cần tư vấn</label>
+          <textarea id="bookNote" rows="2" placeholder="Nhập nội dung cần nhân viên tư vấn..."
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="window.closeBookingModal()"
+            class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200">
+            Hủy
+          </button>
+          <button type="submit"
+            class="px-5 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-lg">
+            Lưu lịch hẹn
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODULAR SCRIPTS (Chạy tốt cả trên file:// lẫn Live Server / Vercel / GitHub Pages) -->
+  <script src="config.example.js?v=6.0"></script>
+  <script src="src/data/faqData.js?v=6.0"></script>
+  <script src="src/utils/validator.js?v=6.0"></script>
+  <script src="src/utils/wowHelper.js?v=6.0"></script>
+  <script src="src/services/storageService.js?v=6.0"></script>
+  <script src="src/services/aiService.js?v=6.0"></script>
+  <script src="src/app.js?v=6.0"></script>
+</body>
+</html>
